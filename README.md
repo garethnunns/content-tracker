@@ -2,7 +2,7 @@
 
 <img src="build/icon.svg" alt="Content Tracker logo" width="80" align="left">
 
-### Track the content in your folders on Airtable or Google Sheets
+### Track files & folders to Airtable or Google Sheets
 [![Checks](https://github.com/garethnunns/content-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/garethnunns/content-tracker/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/garethnunns/content-tracker)](https://github.com/garethnunns/content-tracker/releases/latest) [![Downloads](https://img.shields.io/github/downloads/garethnunns/content-tracker/total)](https://github.com/garethnunns/content-tracker/releases) [![npm](https://img.shields.io/npm/v/@garethnunns/content-tracker)](https://www.npmjs.com/package/@garethnunns/content-tracker) [![App](https://img.shields.io/badge/app-Mac%20%7C%20Windows-0a6cdf)](#app) [![License: GPL-3.0](https://img.shields.io/github/license/garethnunns/content-tracker)](LICENSE)
 
 <br clear="left">
@@ -11,25 +11,9 @@
 
 This project came about as a means to track video content on concert shows, but is written generically. It recursively scans folders, which can be mapped network drives or streamed cloud storage like Dropbox, Drive, LucidLink or Suite, and keeps a list of the files & folders on Airtable or Google Sheets.
 
-There's a command line version and an app for Mac & Windows, which do the same thing.
+There's a command line version and Mac & Windows app, which do the same thing.
 
 ## Quick Start
-
-### Command line
-
-```sh
-npx @garethnunns/content-tracker
-```
-
-Then you just need to [edit the `config.json` file](#config-file) that was created where the command was executed and re-run with the [config command line option `tracker -c`](#config-option--c---config-path).
-
-_Will require Node 20.19 or newer to be installed, if on Mac probably install with Homebrew:_
-```sh
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install node
-```
-
-It says when there's a newer version, and how to get it: `npx @garethnunns/content-tracker@latest`, or `npm install -g @garethnunns/content-tracker` if you installed it. Set `CONTENT_TRACKER_NO_UPDATE_CHECK=1` to stop it looking.
 
 ### App
 
@@ -54,6 +38,22 @@ If you already have a config file from the command line, **Import settings** in 
 When there's a newer version, the window and the menu say so: **Update and restart** downloads it from GitHub, checks it's what the release says it is, installs it and opens it again. On a Mac that works once it's in Applications; opened from anywhere else, it opens the new version for you to drag in.
 
 _The app isn't signed yet, so the first time you open it on a Mac right-click it and choose Open, and on Windows choose More info then Run anyway._
+
+### Command line
+
+```sh
+npx @garethnunns/content-tracker
+```
+
+Then you just need to [edit the `config.json` file](#config-file) that was created where the command was executed and re-run with the [config command line option `tracker -c`](#config-option--c---config-path).
+
+_Will require Node 20.19 or newer to be installed, if on Mac probably install with Homebrew:_
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install node
+```
+
+It says when there's a newer version, and how to get it: `npx @garethnunns/content-tracker@latest`, or `npm install -g @garethnunns/content-tracker` if you installed it. Set `CONTENT_TRACKER_NO_UPDATE_CHECK=1` to stop it looking.
 
 <details>
 <summary><h2 id="airtable-setup">Airtable Setup</h2></summary>
@@ -519,7 +519,7 @@ Signing in with Google needs the app's client secret, which isn't in git: set `G
 
 ### Releasing
 
-Publishing a GitHub release, tagged `v<version>`, publishes to npm and attaches the Mac & Windows apps. Each version's release notes are `docs/release-notes/<version>.md`, which become the GitHub release's description, and the release won't publish without them. It needs an `NPM_TOKEN` secret with access to the package, and a `GOOGLE_CLIENT_SECRET` secret with the Google client secret.
+Publishing a GitHub release, tagged `v<version>`, publishes to npm and attaches the Mac & Windows apps. Each version's release notes are `docs/release-notes/<version>.md`, which become the GitHub release's description, and the release won't publish without them. npm takes it from this repository's release workflow with no token, by [trusted publishing](https://docs.npmjs.com/trusted-publishers), set up in the package's settings on npm. The release needs a `GOOGLE_CLIENT_SECRET` secret with the Google client secret.
 
 Dependabot opens a pull request each week for packages with newer versions, and minor and patch updates merge by themselves once the checks pass. Major updates, and the workflows' actions, wait for someone to merge them.
 

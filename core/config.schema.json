@@ -1,0 +1,220 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Content Tracker config",
+  "description": "What to track, and where. Only settings.files.dirs and where it's tracked are needed: everything else has a default.",
+  "type": "object",
+  "required": [
+    "settings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "settings": {
+      "type": "object",
+      "required": [
+        "files"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "description": "Where the files are tracked.",
+          "enum": [
+            "airtable",
+            "googleSheets"
+          ],
+          "default": "airtable"
+        },
+        "files": {
+          "description": "The folders to scan, and what's tracked from them.",
+          "type": "object",
+          "required": [
+            "dirs"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "rootPath": {
+              "description": "Taken off the start of every path, so it doesn't matter where the folders are on each computer.",
+              "type": "string",
+              "default": ""
+            },
+            "dirs": {
+              "description": "The folders to track.",
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "frequency": {
+              "description": "Seconds between scans, or 0 to scan once and stop.",
+              "type": "number",
+              "minimum": 0,
+              "default": 30
+            },
+            "rules": {
+              "description": "Which folders and files are tracked, as globs like *.mov or regular expressions written /like this/, matched against the path as it's tracked.",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "dirs": {
+                  "$ref": "#/definitions/rule"
+                },
+                "files": {
+                  "$ref": "#/definitions/fileRule"
+                }
+              }
+            },
+            "mediaMetadata": {
+              "description": "Read media files' details, like duration and resolution, with ffprobe.",
+              "type": "boolean",
+              "default": true
+            },
+            "limitToFirstFile": {
+              "description": "Only track the first file in each folder that the rules allow, like the first image of a sequence.",
+              "type": "boolean",
+              "default": false
+            },
+            "trackFolders": {
+              "description": "Also track the folders, with linked records to the files. Off tracks only the files.",
+              "type": "boolean",
+              "default": true
+            },
+            "concurrency": {
+              "description": "How many files are looked at at once.",
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            }
+          }
+        },
+        "removing": {
+          "description": "What happens to the records of files and folders that have gone.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Remove them. Off keeps them, for when media is cleared off a drive but should still be listed. -nd turns it off for a run.",
+              "type": "boolean",
+              "default": true
+            },
+            "confirm": {
+              "description": "Warn before removing more than 10% of a table. -nc turns it off for a run.",
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "airtable": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "token": {
+              "description": "A personal access token, if you haven't signed in. AIRTABLE_API_KEY is used over it.",
+              "type": "string",
+              "default": ""
+            },
+            "base": {
+              "description": "The base's ID, app followed by 14 letters and numbers.",
+              "type": "string"
+            },
+            "foldersTable": {
+              "description": "The folders table's name or ID. A name that isn't there is created.",
+              "type": "string",
+              "default": "Folders"
+            },
+            "filesTable": {
+              "description": "The files table's name or ID. A name that isn't there is created.",
+              "type": "string",
+              "default": "Files"
+            },
+            "view": {
+              "description": "A view to compare against, rather than the whole table.",
+              "type": "string",
+              "default": ""
+            }
+          }
+        },
+        "googleSheets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "spreadsheetId": {
+              "description": "The spreadsheet's link, or its ID.",
+              "type": "string"
+            },
+            "credentials": {
+              "description": "A service account's key, if you haven't signed in. GOOGLE_APPLICATION_CREDENTIALS is used over it.",
+              "type": "string",
+              "default": ""
+            },
+            "foldersSheet": {
+              "description": "The folders tab's name, created if it isn't there.",
+              "type": "string",
+              "default": "Folders"
+            },
+            "filesSheet": {
+              "description": "The files tab's name, created if it isn't there.",
+              "type": "string",
+              "default": "Files"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "pattern": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "includes": {
+          "description": "Only what matches one of these is tracked. Empty tracks everything.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pattern"
+          },
+          "default": []
+        },
+        "excludes": {
+          "description": "What matches any of these isn't tracked.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pattern"
+          },
+          "default": []
+        }
+      }
+    },
+    "fileRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "includes": {
+          "description": "Only what matches one of these is tracked. Empty tracks everything.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pattern"
+          },
+          "default": []
+        },
+        "excludes": {
+          "description": "What matches any of these isn't tracked. Leave it out and the Mac's .DS_Store files aren't.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pattern"
+          },
+          "default": [
+            ".DS_Store"
+          ]
+        }
+      }
+    }
+  }
+}

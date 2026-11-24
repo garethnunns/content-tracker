@@ -1,0 +1,5 @@
+# LF everywhere, so Windows checks out what the tests and generated files expect
+* text=auto eol=lf
+*.png binary
+*.icns binary
+*.ico binary

@@ -1,4 +1,6 @@
 config*.json
+# but not the config schema, which editors and the npm package need
+!core/config.schema.json
 
 .db/
 
