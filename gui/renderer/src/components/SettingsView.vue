@@ -53,7 +53,8 @@ const rules = {
 	fileIncludes: computed(lines('files', 'includes')),
 	fileExcludes: computed(lines('files', 'excludes')),
 	dirIncludes: computed(lines('dirs', 'includes')),
-	dirExcludes: computed(lines('dirs', 'excludes'))
+	dirExcludes: computed(lines('dirs', 'excludes')),
+	dirSkips: computed(lines('dirs', 'skip'))
 }
 
 // an imported config from before Google Sheets won't have a section for it
@@ -67,6 +68,7 @@ function withDefaults(config) {
 	copy.settings.files.rules ??= {}
 	for(const type of ['files', 'dirs'])
 		copy.settings.files.rules[type] = { includes: [], excludes: [], ...copy.settings.files.rules[type] }
+	copy.settings.files.rules.dirs.skip ??= []
 	copy.settings.removing = { enabled: true, confirm: true, ...copy.settings.removing }
 	return copy
 }
@@ -572,6 +574,9 @@ const SERVICE_ACCOUNTS = 'https://github.com/garethnunns/content-tracker#with-a-
 					</SettingField>
 					<SettingField label="Exclude folders" tip="Folders that match any of these don't get a record. Files in them are still found.">
 						<textarea v-model="rules.dirExcludes.value" spellcheck="false" />
+					</SettingField>
+					<SettingField label="Skip folders" tip="Folders that match any of these aren't looked in, so nothing in them is tracked.">
+						<textarea v-model="rules.dirSkips.value" spellcheck="false" />
 					</SettingField>
 				</div>
 			</SettingsStep>

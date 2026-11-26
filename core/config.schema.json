@@ -189,6 +189,14 @@
             "$ref": "#/definitions/pattern"
           },
           "default": []
+        },
+        "skip": {
+          "description": "Folders that match any of these aren't looked in at all, so nothing in them is tracked. Quicker than excluding everything in them, for big folders that never matter.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pattern"
+          },
+          "default": []
         }
       }
     },

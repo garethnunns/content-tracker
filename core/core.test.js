@@ -90,7 +90,7 @@ describe('config', () => {
 		expect(configProblems(config)).toEqual([])
 		const { settings } = prepareConfig(config)
 		expect(settings.files).toMatchObject({ rootPath: '', frequency: 30, mediaMetadata: true, limitToFirstFile: false, concurrency: 10 })
-		expect(settings.files.rules.dirs).toEqual({ includes: [], excludes: [] })
+		expect(settings.files.rules.dirs).toEqual({ includes: [], excludes: [], skip: [] })
 		expect(isAllowed('/shots/.DS_Store', settings.files.rules.files)).toBe(false)
 		expect(settings.airtable).toMatchObject({ token: '', foldersTable: 'Folders', filesTable: 'Files', view: '' })
 	})
@@ -290,6 +290,41 @@ describe('scan', () => {
 		await fs.mkdir(path.join(root, 'skip/keep'), { recursive: true })
 		const found = await scan(filesConfig(root, { rules: rules({}, { includes: [/keep/] }) }))
 		expect(found.folders.map(folder => folder.fields._path)).toEqual(['/skip/keep'])
+	})
+
+	it('never looks in folders it is told to skip', async () => {
+		await fs.mkdir(path.join(root, 'shots/working/frames'), { recursive: true })
+		await fs.writeFile(path.join(root, 'shots/working/frames/0001.tif'), '')
+		await fs.writeFile(path.join(root, 'shots/a.mov'), '')
+		const readdir = vi.spyOn(fs, 'readdir')
+
+		const found = await scan(filesConfig(root, { rules: rules({}, { skip: ['working'].map(parseRule) }) }))
+
+		expect(found.folders.map(folder => folder.fields._path)).toEqual(['/', '/shots'])
+		expect(found.files.map(file => file.fields._path)).toEqual(['/shots/a.mov'])
+		expect(found.errors).toEqual([])
+		expect(readdir.mock.calls.map(([dir]) => projectPath(dir, root))).not.toContain('/shots/working')
+		readdir.mockRestore()
+	})
+
+	it('still looks in folders it is tracking, even if they match a skip', async () => {
+		const tracked = path.join(root, 'working')
+		await fs.mkdir(tracked)
+		await fs.writeFile(path.join(tracked, 'a.mov'), '')
+
+		const found = await scan(filesConfig(root, { dirs: [tracked], rules: rules({}, { skip: ['working'].map(parseRule) }) }))
+
+		expect(found.files.map(file => file.fields._path)).toEqual(['/working/a.mov'])
+	})
+
+	it('still finds the files in excluded folders, which only lose their own record', async () => {
+		await fs.mkdir(path.join(root, 'working'))
+		await fs.writeFile(path.join(root, 'working/a.mov'), '')
+
+		const found = await scan(filesConfig(root, { rules: rules({}, { excludes: ['working'].map(parseRule) }) }))
+
+		expect(found.folders.map(folder => folder.fields._path)).toEqual(['/'])
+		expect(found.files.map(file => file.fields._path)).toEqual(['/working/a.mov'])
 	})
 
 	it('matches rules against the path as it is tracked, wherever the folders are', async () => {

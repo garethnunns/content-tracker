@@ -103,7 +103,16 @@ export async function scan(files, { cache = new MetadataCache(), logger = silent
 	const isBrokenLink = fullPath => queue.add(() => fs.lstat(fullPath))
 		.then(stat => stat.isSymbolicLink(), () => false)
 
+	// only folders inside the ones being tracked are skipped: skipping one of those would
+	// make everything in it look deleted, with nothing in the errors to stop that
+	const skipped = dir => !dirs.includes(dir) && (rules.dirs.skip ?? []).some(rule => rule.test(projectPath(dir, rootPath)))
+
 	async function walk(dir) {
+		if(skipped(dir)) {
+			logger.silly('Skipping %s', dir)
+			return
+		}
+
 		let stat, names
 		try {
 			const realPath = await queue.add(() => fs.realpath(dir))

@@ -238,7 +238,8 @@ Create the default config as [described above](#config-option--c---config-path),
       "rules": {
         "dirs": {
           "includes": [],
-          "excludes": []
+          "excludes": [],
+          "skip": []
         },
         "files": {
           "includes": [],
@@ -326,6 +327,16 @@ You can also set this to `0` and the script will only run once - this is intende
 Which folders and files are tracked: `dirs` decides which folders get a record, and `files` which files do. Each has `includes`, where anything has to match one of them to be tracked (empty tracks everything), and `excludes`, where anything that matches one isn't.
 
 They're matched against the path as it's tracked, like `/05 Delivery/shot_v001.tif`, so the same rules work wherever the folders are and on Mac & Windows. It still looks through every folder whatever the rules say, so a file in a folder that isn't tracked can still be.
+
+`dirs` also has `skip`, for folders that aren't looked in at all, so nothing in them is tracked: anything already tracked from them is removed, as with any other rule. It's quicker than excluding everything in them, for big folders that never matter, like render caches or the frames of a work in progress. The folders in [`dirs`](#configsettingsfilesdirs) themselves are always looked in, _e.g._
+
+```json
+"dirs": {
+  "includes": [],
+  "excludes": [],
+  "skip": ["working", "**/renders/cache"]
+}
+```
 
 Each rule is a glob, or a regular expression for anything a glob can't do:
 

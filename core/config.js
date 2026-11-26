@@ -51,7 +51,7 @@ export function defaultConfig(folder) {
 				dirs: [folder],
 				frequency: 30,
 				rules: {
-					dirs: { includes: [], excludes: [] },
+					dirs: { includes: [], excludes: [], skip: [] },
 					files: { includes: [], excludes: ['.DS_Store'] }
 				},
 				mediaMetadata: true,
@@ -204,7 +204,7 @@ export function configProblems(config) {
 				problems.push(`settings.files.${setting} must be true or false`)
 
 		for(const type of ['dirs', 'files'])
-			for(const rule of ['includes', 'excludes']) {
+			for(const rule of type == 'dirs' ? ['includes', 'excludes', 'skip'] : ['includes', 'excludes']) {
 				const patterns = files.rules?.[type]?.[rule]
 				if(!Array.isArray(patterns))
 					problems.push(`settings.files.rules.${type}.${rule} must be a list`)
@@ -296,7 +296,10 @@ function compileRules(rules) {
 		includes: includes.map(parseRule),
 		excludes: excludes.map(parseRule)
 	})
-	return { dirs: compile(rules.dirs), files: compile(rules.files) }
+	return {
+		dirs: { ...compile(rules.dirs), skip: (rules.dirs.skip ?? []).map(parseRule) },
+		files: compile(rules.files)
+	}
 }
 
 /**
