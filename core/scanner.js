@@ -7,7 +7,9 @@ import { mediaValues, probeFile } from './probe.js'
 import { finderSize } from './format.js'
 import { silentLogger } from './logger.js'
 
-const compareNames = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+const MEDIA_KEYS = Object.keys(mediaValues())
+
+const compareNames =(a, b) => (a < b ? -1 : a > b ? 1 : 0)
 
 /**
  * The path within the project, as a unix style path
@@ -76,7 +78,8 @@ export async function scan(files, { cache = new MetadataCache(), logger = silent
 	async function media(fullPath, stat) {
 		const mtime = stat.mtime.toISOString()
 		const cached = cache.get(fullPath, stat.size, mtime)
-		if(cached) {
+		// one cached before a field was added is read again, rather than leaving that field out
+		if(cached && MEDIA_KEYS.every(key => key in cached)) {
 			logger.silly('Retrieved cached metadata for %s', fullPath)
 			return cached
 		}

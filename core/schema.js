@@ -43,6 +43,8 @@ export const mediaFileFields = [
 	field('videoFormat', 'text'),
 	field('videoAlpha', 'checkbox'),
 	field('videoFPS', 'decimal'),
+	field('frames', 'integer'),
+	field('framesExact', 'checkbox'),
 	field('videoBitRate', 'integer'),
 	field('audio', 'checkbox'),
 	field('audioCodec', 'text'),

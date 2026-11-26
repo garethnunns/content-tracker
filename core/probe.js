@@ -56,6 +56,43 @@ function frameRate(rate) {
 }
 
 /**
+ * A stream's length from its DURATION tag, where Matroska keeps it, like 00:00:09.994000000
+ * @param {string} tag
+ * @returns {number} seconds, 0 if there isn't one
+ */
+function tagDuration(tag) {
+	const [hours, minutes, seconds] = String(tag ?? '').split(':')
+	return seconds === undefined ? 0 : number(hours) * 3600 + number(minutes) * 60 + number(seconds)
+}
+
+/**
+ * How many frames of video there are, and whether that's counted or worked out.
+ * nb_frames is left out by plenty of containers - an H.264 .mp4 hasn't got it where a
+ * ProRes or NotchLC .mov of the same thing has - so it falls back to the length times
+ * the frame rate, using the video's own length: the file's stretches to whichever
+ * stream is longest, and an audio track a little longer than the picture puts it out.
+ * @param {object} videoStream ffprobe's video stream, if there is one
+ * @param {boolean} videoStill whether it's an image
+ * @param {number} fps frames per second
+ * @param {number} fileDuration the file's length, if the stream hasn't got one
+ * @returns {object} .frames & .framesExact
+ */
+function frameCount(videoStream, videoStill, fps, fileDuration) {
+	if(!videoStream)
+		return { frames: 0, framesExact: false }
+	// an image is one frame of a sequence, so a folder of them adds up to its length
+	if(videoStill)
+		return { frames: 1, framesExact: true }
+
+	const counted = number(videoStream.nb_frames)
+	if(counted > 0)
+		return { frames: Math.round(counted), framesExact: true }
+
+	const duration = number(videoStream.duration) || tagDuration(videoStream.tags?.DURATION) || number(fileDuration)
+	return { frames: Math.round(duration * fps), framesExact: false }
+}
+
+/**
  * Turn ffprobe's output into the media fields
  * @param {object} probe output of ffprobe, or nothing if the file isn't media
  * @returns {object} values for everything in mediaFileFields' extras
@@ -66,6 +103,7 @@ export function mediaValues(probe = {}) {
 	const audioStream = streams.find(stream => stream.codec_type == 'audio')
 	const videoStill = probe.format?.format_long_name?.includes('sequence') ?? false
 	const pixelFormat = videoStream?.pix_fmt ?? ''
+	const fps = frameRate(videoStream?.r_frame_rate)
 
 	return {
 		duration: videoStill ? 0 : round(probe.format?.duration),
@@ -76,7 +114,8 @@ export function mediaValues(probe = {}) {
 		videoHeight: number(videoStream?.height),
 		videoFormat: pixelFormat,
 		videoAlpha: ALPHA_FORMATS.test(pixelFormat),
-		videoFPS: videoStill ? 0 : round(frameRate(videoStream?.r_frame_rate)),
+		videoFPS: videoStill ? 0 : round(fps),
+		...frameCount(videoStream, videoStill, Number.isFinite(fps) ? fps : 0, probe.format?.duration),
 		videoBitRate: number(videoStream?.bit_rate),
 		audio: audioStream !== undefined,
 		audioCodec: audioStream?.codec_name ?? '',

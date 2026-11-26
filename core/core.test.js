@@ -256,6 +256,52 @@ describe('media values', () => {
 		})
 		expect(values).toMatchObject({ videoStill: true, duration: 0, videoFPS: 0 })
 	})
+
+	describe('frames', () => {
+		const frames = (stream, format = {}) => {
+			const { frames, framesExact } = mediaValues({ streams: [{ codec_type: 'video', ...stream }], format })
+			return { frames, framesExact }
+		}
+
+		it('counts them from nb_frames when ffprobe has it', () => {
+			expect(frames({ nb_frames: '35964', r_frame_rate: '60000/1001', duration: '600.0' }))
+				.toEqual({ frames: 35964, framesExact: true })
+		})
+
+		it('works them out from the video\'s length when it hasn\'t', () => {
+			// an H.264 .mp4 leaves nb_frames out
+			expect(frames({ r_frame_rate: '30/1', duration: '60.0' }))
+				.toEqual({ frames: 1800, framesExact: false })
+		})
+
+		it('uses the video\'s length over the file\'s, which a longer audio track stretches', () => {
+			expect(frames({ r_frame_rate: '60000/1001', duration: '600.0' }, { duration: '600.07' }))
+				.toEqual({ frames: 35964, framesExact: false })
+		})
+
+		it('reads the video\'s length from its tag in a .mkv, which has no duration of its own', () => {
+			// from a 10 second clip with 11 seconds of audio: the file's length made it 661
+			expect(frames({ r_frame_rate: '60000/1001', tags: { DURATION: '00:00:09.994000000' } }, { duration: '11.023' }))
+				.toEqual({ frames: 599, framesExact: false })
+		})
+
+		it('falls back to the file\'s length when the video hasn\'t got one', () => {
+			expect(frames({ r_frame_rate: '25/1' }, { duration: '4.0' }))
+				.toEqual({ frames: 100, framesExact: false })
+		})
+
+		it('makes an image one frame, so a sequence adds up to its length', () => {
+			expect(frames({ r_frame_rate: '25/1' }, { format_long_name: 'piped tiff sequence' }))
+				.toEqual({ frames: 1, framesExact: true })
+		})
+
+		it('has none without video', () => {
+			expect(mediaValues({ streams: [{ codec_type: 'audio' }], format: { duration: '3' } }))
+				.toMatchObject({ frames: 0, framesExact: false })
+			expect(frames({ r_frame_rate: '0/0', nb_frames: 'N/A' }, { duration: 'N/A' }))
+				.toEqual({ frames: 0, framesExact: false })
+		})
+	})
 })
 
 describe('scan', () => {
@@ -351,6 +397,22 @@ describe('scan', () => {
 
 		expect(get).toHaveBeenCalledTimes(2)
 		expect(set).toHaveBeenCalledTimes(1)
+	})
+
+	it('reads a file again when its cached details are missing a field', async () => {
+		const file = path.join(root, 'notes.txt')
+		await fs.writeFile(file, 'hello')
+		const stat = await fs.stat(file)
+		const cache = new MetadataCache()
+		// as a version from before frames were counted would have left it
+		const { frames, framesExact, ...older } = mediaValues()
+		cache.set(file, stat.size, stat.mtime.toISOString(), older)
+		const set = vi.spyOn(cache, 'set')
+
+		const found = await scan(filesConfig(root, { mediaMetadata: true }), { cache })
+
+		expect(set).toHaveBeenCalledTimes(1)
+		expect(found.files[0].fields).toMatchObject({ _frames: frames, _framesExact: framesExact })
 	})
 })
 

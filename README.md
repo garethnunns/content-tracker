@@ -116,6 +116,8 @@ All the fields of the [files table](#files-table) plus:
 | `_videoFormat`      | Pixel format of the media                   | Single line text
 | `_videoAlpha`       | Whether the media has an alpha channel      | checkbox
 | `_videoFPS`         | Frames Per Second of the video, 0 for stills| Number - 2 decimal places
+| `_frames`           | Number of frames of video, 1 for stills     | Number - 0 decimal places
+| `_framesExact`      | Whether `_frames` was counted, rather than worked out from the duration & frame rate | checkbox
 | `_videoBitRate`     | Bit rate of the video (b)                   | Number - 0 decimal places
 | `_audio`            | Whether the media has a audio stream        | checkbox
 | `_audioCodec`       | Audio codec of the media                    | Single line text

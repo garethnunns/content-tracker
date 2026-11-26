@@ -239,7 +239,7 @@ describe('google sheets', () => {
 		await target.apply('files', { inserts: [{ _path: '/a.mov' }, { _path: '/b.mov' }], updates: [], deletes: [] })
 		const headers = fake.rows('Files')[0]
 		expect(ticks().map(({ setDataValidation }) => headers[setDataValidation.range.startColumnIndex]))
-			.toEqual(['_video', '_videoStill', '_videoAlpha', '_audio'])
+			.toEqual(['_video', '_videoStill', '_videoAlpha', '_framesExact', '_audio'])
 		expect(ticks()[0].setDataValidation).toMatchObject({ range: { startRowIndex: 1, endRowIndex: 3 }, rule: { condition: { type: 'BOOLEAN' } } })
 
 		// one gone and two more makes three records, in rows 2 to 4
